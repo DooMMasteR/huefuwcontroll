@@ -1,3 +1,5 @@
+#include <avr/wdt.h>
+
 #define pwmPin 11 //PIN to the 2 enable ports (pin 3 and 4)
 #define rePin 4 //reversePIN (pin 1)
 #define fwPin 5 //forwardPIN (pin 2)
@@ -22,6 +24,7 @@ void setDir(boolean dir){
     digitalWrite(fwPin, HIGH);
   }
 }
+
 void setBrake(void){
   digitalWrite(rePin, LOW);
   digitalWrite(fwPin, LOW);
@@ -41,7 +44,6 @@ void setSpeed(void){
     case -10 ... 10:
       setBrake();
       analogWrite(pwmPin, 16);
-      delay(12);
       break;
     case 11 ... 255:
       setDir(FORWARD);
@@ -52,15 +54,18 @@ void setSpeed(void){
 
 
 void setup()  { 
+  wdt_enable(WDTO_500MS);
   TCCR2B = TCCR2B & 0b11111000 | 0x06; //set PWM requency of PIN 3 and 11 to ~3kHz
   pinMode(fwPin, OUTPUT);
   pinMode(rePin, OUTPUT);
   setDir(FORWARD);
+  setSpeed();
   for (int thisReading = 0; thisReading < numReadings; thisReading++)
     readings[thisReading] = 0;
 } 
 
-void loop()  { 
+void loop()  {
+  wdt_reset(); 
   total = total - readings[index];
   readings[index] = analogRead(potiPin)/2;
   total = total + readings[index];
